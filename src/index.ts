@@ -7,7 +7,13 @@ import ora from "ora";
 // @ts-ignore
 import { select, checkbox, confirm, password as passwordPrompt } from "@inquirer/prompts";
 import { getChromeDataDir, getProfilePath, listProfiles } from "./chrome.js";
+import { restoreProfile } from "./restore.js";
 import { zipDirectory, formatBytes, estimateSize } from "./zip.js";
+
+function getUserDataDir(userDataDir?: string): string {
+  if (userDataDir === "") program.error("--user-data-dir must not be empty.");
+  return resolve(userDataDir ?? getChromeDataDir());
+}
 
 program
   .name("export-chrome-profile")
@@ -15,8 +21,7 @@ program
   .version("1.0.0")
   .option("--user-data-dir <path>", "Use a custom Chromium user data directory")
   .action(async ({ userDataDir }: { userDataDir?: string }) => {
-    if (userDataDir === "") program.error("--user-data-dir must not be empty.");
-    const chromeDataDir = resolve(userDataDir ?? getChromeDataDir());
+    const chromeDataDir = getUserDataDir(userDataDir);
 
     console.log("");
     console.log(chalk.bold("export-chrome-profile"));
@@ -110,6 +115,7 @@ program
         output: outputPath,
         password: zipPassword,
         includes: inclusions,
+        manifest: { sourceProfilePath: profilePath, browser: userDataDir === undefined ? "Google Chrome" : undefined },
         onProgress: (bytes: number) => {
           const now = Date.now();
           if (now - lastUpdate > 500) {
@@ -133,4 +139,22 @@ program
     }
   });
 
-program.parse();
+program.command("restore <archive>")
+  .description("Restore a profile from an exported ZIP without overwriting an existing profile")
+  .option("--dry-run", "Show the destination without writing files")
+  .configureHelp({ showGlobalOptions: true })
+  .action(async (archive: string, { dryRun }: { dryRun?: boolean }) => {
+    const target = await restoreProfile(archive, getUserDataDir(program.opts().userDataDir), {
+      dryRun,
+      preview: (path, manifest) => {
+        console.log(`Restore destination: ${path}`);
+        if (manifest) console.log(`Original profile: ${JSON.stringify(manifest.sourceProfilePath)}`);
+        if (manifest?.browser) console.log(`Original browser: ${JSON.stringify(manifest.browser)}`);
+      },
+      confirm: () => confirm({ message: "Quit the destination browser before restoring. Continue?", default: false }),
+      password: () => passwordPrompt({ message: "Enter the ZIP password:" }),
+    });
+    if (target) console.log(`Profile restored to: ${target}`);
+  });
+
+program.parseAsync().catch((err: Error) => program.error(err.message));

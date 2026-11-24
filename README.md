@@ -22,7 +22,7 @@ npm run dev
 - **Interactive Prompts**: Easily select which profile to export.
 - **Selective Export**: Choose exactly what data to include (Cookies, History, Bookmarks, Extensions, Local Storage).
 - **Auto-Optimization**: Automatically excludes massive regenerable cache directories (`GPUCache`, `Service Worker/CacheStorage`, etc.) to keep your zip file small. (e.g., A 300MB profile becomes an ~11MB zip).
-- **Secure by Default (AES-256)**: Easily password-protect your zip output so your sensitive cookies and session tokens never sit unencrypted on disk.
+- **Optional AES-256 encryption**: Choose password protection when exporting sensitive profile data.
 
 ## Usage
 
@@ -54,6 +54,16 @@ npm run dev -- --user-data-dir "$HOME/Library/Application Support/Chromium"
 ```
 
 Use the folder containing `Default` or `Profile 1`, not the profile folder itself. Without the flag, the tool uses Google Chrome's default location.
+
+### Restore an exported ZIP
+
+```bash
+npm run dev -- restore ~/Downloads/chrome-profile.zip --user-data-dir "$HOME/Library/Application Support/Chromium" --dry-run
+```
+
+The preview shows where the profile will go without writing files. Omit `--dry-run` to restore. Quit the destination browser first, and move any existing `Default` or `Profile N` folder at the destination aside as a backup: restore will not overwrite it.
+
+Both plain and password-protected ZIPs are supported, including earlier exports. Only restore archives you trust; they can contain browser extensions. New exports also record the original profile path inside the ZIP for reference. Restore never uses that path as the destination. It does not transfer Keychain data or `Local State`, so you may need to sign in again and select a restored numbered profile explicitly.
 
 ## Supported Platforms
 

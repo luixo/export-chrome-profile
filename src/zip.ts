@@ -8,7 +8,7 @@ import archiverZipEncrypted from "archiver-zip-encrypted";
 // @ts-ignore
 import fastFolderSize from "fast-folder-size";
 import { promisify } from "node:util";
-import { EXCLUDED_DIRS, EXCLUDED_FILE_PATTERNS } from "./chrome.js";
+import { EXCLUDED_DIRS, EXCLUDED_FILE_PATTERNS, MANIFEST_NAME, type ProfileManifest } from "./chrome.js";
 
 const getFolderSize = promisify(fastFolderSize);
 
@@ -24,6 +24,8 @@ export interface ZipOptions {
   password?: string;
   /** Array of specific categories to include */
   includes: string[];
+  /** Optional metadata for restoring on another machine */
+  manifest?: ProfileManifest;
   /** Progress callback — receives bytes processed so far */
   onProgress?: (bytesProcessed: number) => void;
 }
@@ -78,7 +80,7 @@ export function shouldIncludeEntry(
  * Returns the final file size in bytes.
  */
 export function zipDirectory(opts: ZipOptions): Promise<number> {
-  const { source, output, password, includes, onProgress } = opts;
+  const { source, output, password, includes, manifest, onProgress } = opts;
 
   return new Promise((resolve, reject) => {
     const outStream = createWriteStream(output);
@@ -104,6 +106,8 @@ export function zipDirectory(opts: ZipOptions): Promise<number> {
     }
 
     archive.pipe(outStream);
+
+    if (manifest) archive.append(JSON.stringify(manifest), { name: MANIFEST_NAME });
 
     archive.directory(source, basename(source), (entry: any) => {
       if (!shouldIncludeEntry(source, entry.name, includes)) {

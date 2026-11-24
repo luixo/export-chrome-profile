@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^8.3.0",
+    "@zip.js/zip.js": "2.25.0",
     "archiver": "^7.0.1",
     "archiver-zip-encrypted": "^2.0.0",
     "chalk": "^5.4.1",

@@ -2,6 +2,17 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { access, readdir } from "node:fs/promises";
 
+export const MANIFEST_NAME = "export-chrome-profile.json";
+
+export interface ProfileManifest {
+  sourceProfilePath: string;
+  browser?: string;
+}
+
+export function isProfileName(name: string): boolean {
+  return name === "Default" || name.startsWith("Profile ");
+}
+
 /**
  * Directories inside the Chrome profile that are regenerated automatically
  * and don't contain meaningful user data. Excluding them shrinks the zip significantly.
@@ -85,7 +96,7 @@ export async function listProfiles(chromeDir = getChromeDataDir()): Promise<stri
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
-      if (entry.name === "Default" || entry.name.startsWith("Profile ")) {
+      if (isProfileName(entry.name)) {
         const isValid = await validateProfile(join(chromeDir, entry.name));
         if (isValid) profiles.push(entry.name);
       }
