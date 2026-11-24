@@ -54,8 +54,8 @@ export function getChromeDataDir(): string {
  * Returns the full path to a specific Chrome profile directory.
  * @param profileName  Name of the profile folder (e.g. "Default", "Profile 1")
  */
-export function getProfilePath(profileName = "Default"): string {
-  return join(getChromeDataDir(), profileName);
+export function getProfilePath(profileName = "Default", chromeDir = getChromeDataDir()): string {
+  return join(chromeDir, profileName);
 }
 
 /**
@@ -78,9 +78,7 @@ export async function validateProfile(profilePath: string): Promise<boolean> {
 /**
  * Lists all available Chrome profiles on this machine.
  */
-export async function listProfiles(): Promise<string[]> {
-  const chromeDir = getChromeDataDir();
-
+export async function listProfiles(chromeDir = getChromeDataDir()): Promise<string[]> {
   try {
     const entries = await readdir(chromeDir, { withFileTypes: true });
     const profiles: string[] = [];

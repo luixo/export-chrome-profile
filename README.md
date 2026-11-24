@@ -9,10 +9,11 @@ This tool is designed to help developers, AI agents, and browser automation engi
 
 ## Quick Start
 
-No installation required. Just run:
+Run this fork from a local checkout:
 
 ```bash
-npx export-chrome-profile
+npm ci
+npm run dev
 ```
 
 ## Features
@@ -44,17 +45,15 @@ Running the command will launch an interactive wizard:
   File is encrypted. Do not forget your password!
 ```
 
-### Advanced Usage
+### Use a custom profile location
 
-If you prefer to skip the interactive wizard, you can pass arguments directly:
+Pass `--user-data-dir` to open the same wizard for a different browser data directory:
 
 ```bash
-# Export the Default profile to a specific location
-npx export-chrome-profile --profile "Default" --output ~/Desktop/my-profile.zip
-
-# Export a specific named profile
-npx export-chrome-profile --profile "Profile 2"
+npm run dev -- --user-data-dir "$HOME/Library/Application Support/Chromium"
 ```
+
+Use the folder containing `Default` or `Profile 1`, not the profile folder itself. Without the flag, the tool uses Google Chrome's default location.
 
 ## Supported Platforms
 

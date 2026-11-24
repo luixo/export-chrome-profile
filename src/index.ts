@@ -1,31 +1,34 @@
 #!/usr/bin/env node
 
 import { resolve } from "node:path";
-import { homedir } from "node:os";
 import { program } from "commander";
 import chalk from "chalk";
 import ora from "ora";
 // @ts-ignore
 import { select, checkbox, confirm, password as passwordPrompt } from "@inquirer/prompts";
-import { getChromeDataDir, getProfilePath, validateProfile, listProfiles } from "./chrome.js";
+import { getChromeDataDir, getProfilePath, listProfiles } from "./chrome.js";
 import { zipDirectory, formatBytes, estimateSize } from "./zip.js";
 
 program
   .name("export-chrome-profile")
   .description("Export your Chrome profile interactively")
   .version("1.0.0")
-  .action(async () => {
+  .option("--user-data-dir <path>", "Use a custom Chromium user data directory")
+  .action(async ({ userDataDir }: { userDataDir?: string }) => {
+    if (userDataDir === "") program.error("--user-data-dir must not be empty.");
+    const chromeDataDir = resolve(userDataDir ?? getChromeDataDir());
+
     console.log("");
     console.log(chalk.bold("export-chrome-profile"));
     console.log(chalk.dim("─────────────────────────"));
     console.log("");
 
     // 1. Interactive Profile Selection
-    const availableProfiles = await listProfiles();
+    const availableProfiles = await listProfiles(chromeDataDir);
     
     if (availableProfiles.length === 0) {
       console.log(chalk.red("  No valid Chrome profiles found on this machine."));
-      console.log(chalk.dim(`  Looked in: ${getChromeDataDir()}`));
+      console.log(chalk.dim(`  Looked in: ${chromeDataDir}`));
       process.exit(1);
     }
 
@@ -39,7 +42,7 @@ program
       console.log(chalk.dim(`  Auto-selected only available profile: ${selectedProfile}`));
     }
 
-    const profilePath = getProfilePath(selectedProfile);
+    const profilePath = getProfilePath(selectedProfile, chromeDataDir);
 
     // 2. Selective Export
     const inclusions = await checkbox({
